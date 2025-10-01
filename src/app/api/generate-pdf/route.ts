@@ -70,13 +70,52 @@ export async function POST(request: NextRequest) {
 
     // Link Profile
     pdf.setFontSize(16)
-    pdf.text('Link Profile', 20, yPosition)
+    pdf.text('Link Profile Analysis', 20, yPosition)
     yPosition += 15
 
     pdf.setFontSize(12)
-    yPosition = addText(`Estimated Backlinks: ${auditResult.seo.backlinks}`, 20, yPosition, pageWidth - 40)
-    yPosition = addText(`Referring Domains: ${auditResult.seo.referringDomains}`, 20, yPosition, pageWidth - 40)
+    yPosition = addText(`Total Backlinks: ${auditResult.seo.backlinks.totalBacklinks.toLocaleString()}`, 20, yPosition, pageWidth - 40)
+    yPosition = addText(`Referring Domains: ${auditResult.seo.backlinks.referringDomains.toLocaleString()}`, 20, yPosition, pageWidth - 40)
+    yPosition = addText(`DoFollow Backlinks: ${auditResult.seo.backlinks.doFollowBacklinks.toLocaleString()} (${Math.round((auditResult.seo.backlinks.doFollowBacklinks / auditResult.seo.backlinks.totalBacklinks) * 100)}%)`, 20, yPosition, pageWidth - 40)
+    yPosition = addText(`NoFollow Backlinks: ${auditResult.seo.backlinks.noFollowBacklinks.toLocaleString()}`, 20, yPosition, pageWidth - 40)
+    yPosition = addText(`New Backlinks (30 days): ${auditResult.seo.backlinks.newBacklinks.toLocaleString()}`, 20, yPosition, pageWidth - 40)
+    yPosition = addText(`Lost Backlinks (30 days): ${auditResult.seo.backlinks.lostBacklinks.toLocaleString()}`, 20, yPosition, pageWidth - 40)
     yPosition += 10
+
+    // Domain Authority
+    pdf.setFontSize(16)
+    pdf.text('Domain Authority Metrics', 20, yPosition)
+    yPosition += 15
+
+    pdf.setFontSize(12)
+    yPosition = addText(`Domain Rating: ${auditResult.seo.domainAuthority.domainRating}/100 (Ahrefs style)`, 20, yPosition, pageWidth - 40)
+    yPosition = addText(`Domain Authority: ${auditResult.seo.domainAuthority.domainAuthority}/100 (Moz style)`, 20, yPosition, pageWidth - 40)
+    yPosition = addText(`Trust Flow: ${auditResult.seo.domainAuthority.trustFlow}/100 (Majestic)`, 20, yPosition, pageWidth - 40)
+    yPosition = addText(`Citation Flow: ${auditResult.seo.domainAuthority.citationFlow}/100 (Majestic)`, 20, yPosition, pageWidth - 40)
+    yPosition += 10
+
+    // Organic Performance
+    pdf.setFontSize(16)
+    pdf.text('Organic Performance', 20, yPosition)
+    yPosition += 15
+
+    pdf.setFontSize(12)
+    yPosition = addText(`Estimated Monthly Organic Traffic: ${auditResult.seo.domainAuthority.organicTraffic.toLocaleString()} visits`, 20, yPosition, pageWidth - 40)
+    yPosition = addText(`Organic Keywords: ${auditResult.seo.domainAuthority.organicKeywords.toLocaleString()}`, 20, yPosition, pageWidth - 40)
+    yPosition += 10
+
+    // Top Referring Domains
+    if (auditResult.seo.backlinks.topReferringDomains.length > 0) {
+      pdf.setFontSize(14)
+      pdf.text('Top Referring Domains', 20, yPosition)
+      yPosition += 10
+
+      pdf.setFontSize(11)
+      auditResult.seo.backlinks.topReferringDomains.slice(0, 5).forEach((domain, index) => {
+        yPosition = addText(`${index + 1}. ${domain}`, 25, yPosition, pageWidth - 50, 11)
+      })
+      yPosition += 10
+    }
 
     // Check if we need a new page
     if (yPosition > pageHeight - 80) {

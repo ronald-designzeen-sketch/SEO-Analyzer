@@ -169,17 +169,98 @@ export default function Dashboard({ auditResult }: DashboardProps) {
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Link Profile</h2>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-gray-700">Backlinks</span>
+                <span className="text-gray-700">Total Backlinks</span>
                 <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                  {auditResult.seo.backlinks} estimated
+                  {auditResult.seo.backlinks.totalBacklinks.toLocaleString()}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-700">Referring Domains</span>
                 <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                  {auditResult.seo.referringDomains} estimated
+                  {auditResult.seo.backlinks.referringDomains.toLocaleString()}
                 </span>
               </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700">DoFollow Links</span>
+                <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                  {auditResult.seo.backlinks.doFollowBacklinks.toLocaleString()} ({Math.round((auditResult.seo.backlinks.doFollowBacklinks / auditResult.seo.backlinks.totalBacklinks) * 100)}%)
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700">New Links (30d)</span>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  auditResult.seo.backlinks.newBacklinks > auditResult.seo.backlinks.lostBacklinks 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-orange-100 text-orange-800'
+                }`}>
+                  +{auditResult.seo.backlinks.newBacklinks.toLocaleString()}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Domain Authority & Traffic */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+          <div className="card">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Domain Authority</h2>
+            <div className="space-y-6">
+              <ScoreIndicator
+                label="Domain Rating"
+                score={auditResult.seo.domainAuthority.domainRating}
+                description="Overall domain strength (Ahrefs style)"
+              />
+              <ScoreIndicator
+                label="Domain Authority"
+                score={auditResult.seo.domainAuthority.domainAuthority}
+                description="Domain authority score (Moz style)"
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-primary-600">
+                    {auditResult.seo.domainAuthority.trustFlow}
+                  </div>
+                  <div className="text-sm text-gray-600">Trust Flow</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-primary-600">
+                    {auditResult.seo.domainAuthority.citationFlow}
+                  </div>
+                  <div className="text-sm text-gray-600">Citation Flow</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="card">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Organic Performance</h2>
+            <div className="space-y-6">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-primary-600 mb-2">
+                  {auditResult.seo.domainAuthority.organicTraffic.toLocaleString()}
+                </div>
+                <div className="text-sm text-gray-600">Estimated Monthly Organic Traffic</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-primary-600 mb-2">
+                  {auditResult.seo.domainAuthority.organicKeywords.toLocaleString()}
+                </div>
+                <div className="text-sm text-gray-600">Organic Keywords</div>
+              </div>
+              
+              {auditResult.seo.backlinks.topReferringDomains.length > 0 && (
+                <div>
+                  <h3 className="font-medium text-gray-900 mb-3">Top Referring Domains</h3>
+                  <div className="space-y-2">
+                    {auditResult.seo.backlinks.topReferringDomains.slice(0, 5).map((domain, index) => (
+                      <div key={index} className="flex items-center justify-between text-sm">
+                        <span className="text-gray-700">{domain}</span>
+                        <span className="text-primary-600 font-medium">#{index + 1}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -211,4 +292,3 @@ export default function Dashboard({ auditResult }: DashboardProps) {
     </section>
   )
 }
-

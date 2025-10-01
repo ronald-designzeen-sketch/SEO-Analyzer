@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import * as cheerio from 'cheerio'
 import { SEOAuditResult, Recommendation } from '@/types/seo'
 import { PageSpeedResult } from '@/types/pagespeed'
+import { BacklinkService } from '@/services/backlinkService'
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,12 +35,13 @@ export async function POST(request: NextRequest) {
 }
 
 async function performSEOAudit(url: string): Promise<SEOAuditResult> {
-  const [pageSpeedData, htmlContent] = await Promise.all([
+  const [pageSpeedData, htmlContent, backlinkAnalysis] = await Promise.all([
     getPageSpeedData(url),
-    getHTMLContent(url)
+    getHTMLContent(url),
+    BacklinkService.getComprehensiveAnalysis(url)
   ])
 
-  const seoAnalysis = analyzeHTML(htmlContent, url)
+  const seoAnalysis = analyzeHTML(htmlContent, url, backlinkAnalysis)
   const recommendations = generateRecommendations(pageSpeedData, seoAnalysis)
 
   return {
@@ -107,7 +109,7 @@ async function getHTMLContent(url: string): Promise<string> {
   }
 }
 
-function analyzeHTML(html: string, url: string) {
+function analyzeHTML(html: string, url: string, backlinkAnalysis: { backlinks: any, domainAuthority: any }) {
   const $ = cheerio.load(html)
   
   // Basic SEO analysis
@@ -122,10 +124,6 @@ function analyzeHTML(html: string, url: string) {
   
   // Mock mobile-friendly check (in real implementation, you'd use Google's Mobile-Friendly Test API)
   const isMobileFriendly = $('meta[name="viewport"]').length > 0
-  
-  // Mock backlink data (in real implementation, you'd use Moz, SEMrush, or Ahrefs API)
-  const backlinks = Math.floor(Math.random() * 1000) + 100
-  const referringDomains = Math.floor(backlinks / 3) + 20
 
   return {
     titleLength: title.length,
@@ -135,8 +133,8 @@ function analyzeHTML(html: string, url: string) {
     isMobileFriendly,
     totalImages: images.length,
     imagesWithAlt: imagesWithAlt.length,
-    backlinks,
-    referringDomains
+    backlinks: backlinkAnalysis.backlinks,
+    domainAuthority: backlinkAnalysis.domainAuthority
   }
 }
 
@@ -218,6 +216,48 @@ function generateRecommendations(
     })
   }
 
+  // Backlink and domain authority recommendations
+  if (seo.domainAuthority.domainRating < 30) {
+    recommendations.push({
+      title: 'Improve Domain Authority',
+      description: `Your Domain Rating is ${seo.domainAuthority.domainRating}/100. Focus on earning high-quality backlinks and creating valuable content.`,
+      priority: 'high'
+    })
+  }
+
+  if (seo.backlinks.totalBacklinks < 100) {
+    recommendations.push({
+      title: 'Build More Backlinks',
+      description: `You have ${seo.backlinks.totalBacklinks.toLocaleString()} backlinks. Focus on content marketing and outreach to earn more quality links.`,
+      priority: 'medium'
+    })
+  }
+
+  if (seo.backlinks.referringDomains < 20) {
+    recommendations.push({
+      title: 'Diversify Link Sources',
+      description: `You have links from ${seo.backlinks.referringDomains} domains. Work on getting links from more diverse, authoritative sources.`,
+      priority: 'medium'
+    })
+  }
+
+  const doFollowRatio = seo.backlinks.doFollowBacklinks / seo.backlinks.totalBacklinks
+  if (doFollowRatio < 0.6) {
+    recommendations.push({
+      title: 'Increase DoFollow Backlinks',
+      description: `Only ${Math.round(doFollowRatio * 100)}% of your backlinks are DoFollow. Focus on earning more DoFollow links for better SEO value.`,
+      priority: 'medium'
+    })
+  }
+
+  if (seo.domainAuthority.organicTraffic < 1000) {
+    recommendations.push({
+      title: 'Improve Organic Visibility',
+      description: `Your estimated organic traffic is ${seo.domainAuthority.organicTraffic.toLocaleString()} visits/month. Focus on keyword optimization and content creation.`,
+      priority: 'medium'
+    })
+  }
+
   // Add some general recommendations if we don't have many specific ones
   if (recommendations.length < 3) {
     recommendations.push({
@@ -227,12 +267,11 @@ function generateRecommendations(
     })
 
     recommendations.push({
-      title: 'Build Quality Backlinks',
-      description: 'Focus on earning high-quality backlinks from relevant, authoritative websites in your industry.',
+      title: 'Monitor Competitor Backlinks',
+      description: 'Analyze your competitors\' backlink profiles to identify new link building opportunities.',
       priority: 'low'
     })
   }
 
   return recommendations
 }
-

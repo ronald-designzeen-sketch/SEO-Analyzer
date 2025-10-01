@@ -12,7 +12,7 @@ export default function Hero() {
             Powered by Design Zeen Marketing Agency
           </p>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Enter your website URL to see your SEO performance instantly. 
+            Enter your website URL or domain name to see your SEO performance instantly. 
             If you need improvements, our team can help.
           </p>
         </div>
@@ -57,4 +57,3 @@ export default function Hero() {
     </section>
   )
 }
-
