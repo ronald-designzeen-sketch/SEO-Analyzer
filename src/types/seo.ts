@@ -13,10 +13,29 @@ export interface SEOAuditResult {
     isMobileFriendly: boolean
     totalImages: number
     imagesWithAlt: number
-    backlinks: number
-    referringDomains: number
+    backlinks: BacklinkData
+    domainAuthority: DomainAuthorityData
   }
   recommendations: Recommendation[]
+}
+
+export interface BacklinkData {
+  totalBacklinks: number
+  referringDomains: number
+  doFollowBacklinks: number
+  noFollowBacklinks: number
+  newBacklinks: number // Last 30 days
+  lostBacklinks: number // Last 30 days
+  topReferringDomains: string[]
+}
+
+export interface DomainAuthorityData {
+  domainRating: number // 0-100 (Ahrefs style)
+  domainAuthority: number // 0-100 (Moz style)
+  trustFlow: number // 0-100 (Majestic style)
+  citationFlow: number // 0-100 (Majestic style)
+  organicTraffic: number
+  organicKeywords: number
 }
 
 export interface Recommendation {
@@ -32,4 +51,3 @@ export interface LeadData {
   message: string
   timestamp: string
 }
-
