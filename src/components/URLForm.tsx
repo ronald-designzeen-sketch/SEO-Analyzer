@@ -8,16 +8,36 @@ import { useRouter } from 'next/navigation'
 
 const urlSchema = z.object({
   url: z.string()
-    .min(1, 'Please enter a URL')
-    .url('Please enter a valid URL')
+    .min(1, 'Please enter a URL or domain name')
+    .transform((val) => {
+      // Clean up the input
+      let cleanUrl = val.trim().toLowerCase()
+      
+      // Remove common prefixes that users might add
+      cleanUrl = cleanUrl.replace(/^(https?:\/\/)?(www\.)?/, '')
+      
+      // Remove trailing slashes and paths for domain-only input
+      cleanUrl = cleanUrl.split('/')[0]
+      
+      // Add https:// prefix
+      return `https://${cleanUrl}`
+    })
     .refine((url) => {
       try {
         const parsed = new URL(url)
-        return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+        // Check if it's a valid domain format
+        const hostname = parsed.hostname
+        return (
+          hostname.includes('.') && // Must have at least one dot
+          hostname.length > 3 && // Minimum length
+          !hostname.startsWith('.') && // Can't start with dot
+          !hostname.endsWith('.') && // Can't end with dot
+          /^[a-zA-Z0-9.-]+$/.test(hostname) // Only valid characters
+        )
       } catch {
         return false
       }
-    }, 'Please enter a valid HTTP or HTTPS URL')
+    }, 'Please enter a valid domain name or URL (e.g., example.com)')
 })
 
 type URLFormData = z.infer<typeof urlSchema>
@@ -38,11 +58,8 @@ export default function URLForm() {
     setIsLoading(true)
     
     try {
-      // Ensure URL has protocol
-      let url = data.url.trim()
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        url = 'https://' + url
-      }
+      // The URL is already processed by the Zod transform
+      const url = data.url
       
       // Navigate to results page with URL as query parameter
       const encodedUrl = encodeURIComponent(url)
@@ -60,7 +77,7 @@ export default function URLForm() {
           <input
             {...register('url')}
             type="text"
-            placeholder="Enter your website URL (e.g., example.com)"
+            placeholder="Enter your website URL or domain (e.g., example.com, https://example.com)"
             className={`input-field ${errors.url ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
             disabled={isLoading}
           />
@@ -94,4 +111,3 @@ export default function URLForm() {
     </form>
   )
 }
-
